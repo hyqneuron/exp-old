@@ -1,0 +1,22 @@
+function [] = visP(P1,P2,size)
+if nargin == 2
+    W1 = P1;size=P2;
+e
+end
+W1 = log(P1./P2);
+imagesc(reshape(W1,size,size));
+colormap(jet);
+axis square;
+%{
+if nargin == 2
+    data_ = double(P1);
+    size = P2;
+else
+    data_ = double(log(P1./P2)');
+end
+surf(reshape(data_,size,size));
+view(2);
+set(gca, 'YDir', 'reverse');
+axis image
+%}
+end
