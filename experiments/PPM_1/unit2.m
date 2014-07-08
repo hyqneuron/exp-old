@@ -41,6 +41,7 @@ P_k_1 = AvgActivation * Pk1 * ones(pSize*pSize, 1);
 P_k_2 = AvgActivation * Pk2 * ones(pSize*pSize, 1);
 P_k_3 = AvgOff        * Pk1 * ones(pSize*pSize, 1);
 P_k_4 = AvgOff        * Pk2 * ones(pSize*pSize, 1);
+P_k_1(8) = 4*AvgActivation * Pk1;
 P_k = [P_k_1, P_k_2, P_k_3, P_k_4];
 
 clear P_j_1 P_j_2 P_j_3 P_j_4;
@@ -59,6 +60,7 @@ P_kj_2 = Pk1*Pj2;
 P_kj_3 = Pk2*Pj1;
 P_kj_4 = Pk2*Pj2;
 P_kj = [P_kj_1, P_kj_2, P_kj_3, P_kj_4];
+
 clear P_jk_1 P_jk_2 P_jk_3 P_jk_4;
 clear P_kj_1 P_kj_2 P_kj_3 P_kj_4;
 
@@ -66,7 +68,7 @@ clear P_kj_1 P_kj_2 P_kj_3 P_kj_4;
 decay = 0.999;
 antidecay=1-decay;
 
-endPoint = 120000;
+endPoint = 30000;
 activities = zeros(endPoint,1);
 sss = zeros(endPoint,1);
 
@@ -80,15 +82,19 @@ for i = 1:endPoint
     input(pCenter);
     [activityj,sj] = activate(input,P_j(:,1),P_j(:,2),P_j(:,3),P_j(:,4),Pj1,Pj2);
     [activityk,sk] = activate(input,P_j(:,1),P_j(:,2),P_j(:,3),P_j(:,4),Pj1,Pj2);
+    % 2.1 reactivate
+    [activityj2,sj2] = activateAgain(sj, activityk, P_kj(1), P_kj(2), P_kj(3), P_kj(4), Pj1, Pj2, 3.6461503291320485);
+    [activityk2,sk2] = activateAgain(sk, activityj, P_jk(1), P_jk(2), P_jk(3), P_jk(4), Pk1, Pk2, 3.6461503291320485);
     activities(i)=activityj;
     sss(i) = s;
     % 3 compute current P values
     input = input';
     antinput = antinput';
-    cPj1 = activityj;
-    cPj2 = 1 - activityj;
-    cPk1 = activityk;
-    cPk2 = 1 - activityk;
+    cPj1 = activityj2;
+    cPj2 = 1 - activityj2;
+    cPk1 = activityk2;
+    cPk2 = 1 - activityk2;
+    
     cP_j = [input * cPj1, input * cPj2, antinput * cPj1, antinput * cPj2];
     cP_k = [input * cPk1, input * cPk2, antinput * cPk1, antinput * cPk2];
 
@@ -100,6 +106,9 @@ for i = 1:endPoint
     Pk1 = decay * Pk1 + antidecay * cPk1;
     Pk2 = decay * Pk2 + antidecay * cPk2;
     P_k = decay * P_k + antidecay * cP_k;
+    
+    P_jk =decay * P_jk + antidecay * [cPj1*cPk1, cPj1*cPk2, cPj2*cPk1, cPj2*cPk2];
+    P_kj =decay * P_jk + antidecay * [cPk1*cPj1, cPk1*cPj2, cPk2*cPj1, cPk2*cPj2];
     if mod(i,10000)==0
         fprintf('i=%d\n',i);
     end
@@ -108,6 +117,13 @@ P1 = P_j(:,1)/Pj1;
 P2 = P_j(:,2)/Pj2;
 P3 = P_j(:,3)/Pj1;
 P4 = P_j(:,4)/Pj2;
+figure
+visP(log(P1./P2)-log(P3./P4),pSize);
+P1 = P_k(:,1)/Pj1;
+P2 = P_k(:,2)/Pj2;
+P3 = P_k(:,3)/Pj1;
+P4 = P_k(:,4)/Pj2;
+figure
 visP(log(P1./P2)-log(P3./P4),pSize);
 
 
