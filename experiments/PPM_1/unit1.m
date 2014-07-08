@@ -41,6 +41,8 @@ would be 0.3. As for 1.2, make it 0.8:0.2 for now. Make b's own bias be
 0.2:0.8
 %}
 
+
+
 % patch size
 patches = single(data.patches8)/256;
 pSize = size(patches,1);
@@ -59,6 +61,7 @@ P_j_2 = AvgActivation * Pb2 * ones(pSize*pSize, 1);
 P_j_3 = AvgOff        * Pb1 * ones(pSize*pSize, 1);
 P_j_4 = AvgOff        * Pb2 * ones(pSize*pSize, 1);
 P_j = [P_j_1, P_j_2, P_j_3, P_j_4];
+clear P_j_1 P_j_2 P_j_3 P_j_4;
 
 decay = 0.999;
 antidecay=1-decay;
@@ -67,6 +70,7 @@ endPoint = 120000;
 activities = zeros(endPoint,1);
 sss = zeros(endPoint,1);
 
+cP_j = zeros(pSize*pSize,4);
 
 % we do training using patches in a sequential manner
 for i = 1:endPoint
@@ -83,22 +87,11 @@ for i = 1:endPoint
     cPb1 = activity;
     cPb2 = 1 - activity;
     cP_j = [input * cPb1, input * cPb2, antinput * cPb1, antinput * cPb2];
-    %{
-    cP_j_1  = input * cPb1;
-    cP_j_2  = input * cPb2;
-    cP_j_3  = antinput * cPb1;
-    cP_j_4  = antinput * cPb2;
-    %}
+
     % 4 update P values
     Pb1 = decay * Pb1 + antidecay * cPb1;
     Pb2 = decay * Pb2 + antidecay * cPb2;
     P_j = decay * P_j + antidecay * cP_j;
-    %{
-    P_j_1 = decay * P_j_1 + antidecay * cP_j_1;
-    P_j_2 = decay * P_j_2 + antidecay * cP_j_2;
-    P_j_3 = decay * P_j_3 + antidecay * cP_j_3;
-    P_j_4 = decay * P_j_4 + antidecay * cP_j_4;
-    %}
     if mod(i,10000)==0
         fprintf('i=%d\n',i);
     end
