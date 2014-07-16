@@ -16,12 +16,13 @@ samplesPerImage = 2;
 
 global patches;
 patches = zeros(patchSize,patchSize, samplesPerImage * size(trainAll,1));
+reorderIndices = randperm(size(trainAll,1)*samplesPerImage);
 
 for i = 1:size(trainAll,1)
     for j = 1:samplesPerImage
         x = randi([starting,last]);
         y = randi([starting,last]);
         extracted = extractPatch(trainAll(i,:), x,y,patchSize,patchSize,28,28);
-        patches(:,:,(i-1)*samplesPerImage+j) = extracted; 
+        patches(:,:,reorderIndices((i-1)*samplesPerImage+j)) = extracted; 
     end
 end
