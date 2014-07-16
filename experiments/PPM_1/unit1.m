@@ -77,7 +77,6 @@ for i = 1:endPoint
     % 2 compute activity
     input = reshape(patches(:,:,i),1,pSize*pSize);
     antinput = 1.-input;
-    input(pCenter);
     [activity,s] = activate(input,P_j(:,1),P_j(:,2),P_j(:,3),P_j(:,4),Pb1,Pb2);
     activities(i)=activity;
     sss(i) = s;
