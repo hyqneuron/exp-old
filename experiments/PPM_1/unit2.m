@@ -5,9 +5,8 @@ lateral inhibition takes place.
 This has to be done in several steps:
 1. Initialize weights to some value
 2. Compute activation value for two output units
-3. Compute valus of P(ai,bj) and so on
-4. Update weights
-5. goto step 2
+3. Compute current joint activities and update weights
+4. goto step 2
 %}
 
 
@@ -67,25 +66,26 @@ clear P_kj_1 P_kj_2 P_kj_3 P_kj_4;
 
 decay = 0.999;
 antidecay=1-decay;
-decay2= 0.95;
+decay2= 0.99;
 antidecay2=1-decay2;
 
-endPoint = 30000;
-activities = zeros(endPoint,1);
-sss = zeros(endPoint,1);
+endPoint = 120000;
+activitiesj = zeros(endPoint,1);
+activitiesk = zeros(endPoint,1);
+sssj = zeros(endPoint,1);
+sssk = zeros(endPoint,1);
 
 cP_j = zeros(pSize*pSize,4);
 
-% we do training using patches in a sequential manner
+%%%%%%%%%%%%%%%%% 2 compute activity %%%%%%%%%%%%%%%%%
+alpha = 1;
 for i = 1:endPoint
-    % 2 compute activity
     input = reshape(patches(:,:,i),1,pSize*pSize);
     antinput = 1.-input;
     [activityj,sumj] = activate(input,P_j(:,1),P_j(:,2),P_j(:,3),P_j(:,4),Pj1,Pj2);
     [activityk,sumk] = activate(input,P_k(:,1),P_k(:,2),P_k(:,3),P_k(:,4),Pk1,Pk2);
     % 2.1 reactivate
-    alpha = 2;%3.646150329132049;
-    for j = 1:20
+    for j = 1:1
         activityj_tmp = activityj;
         % compute new activity for j, using activity of k
         [activityj,sumj2] = activateAgain(sumj, activityk, ...
@@ -95,9 +95,14 @@ for i = 1:endPoint
             P_jk(1), P_jk(2), P_jk(3), P_jk(4), Pk1, Pk2, alpha);
     end
     
-    %activities(i)=activityj;
-    %sss(i) = s;
-    % 3 compute current P values
+    activitiesj(i)=activityj;
+    activitiesk(i)=activityk;
+    sssj(i) = sumj;
+    sssk(i) = sumk;
+    
+    
+%%%%%%%%%%%%%%%%% 3 weights %%%%%%%%%%%%%%%%%
+    %Compute current joint activities and update weights
     input = input';
     antinput = antinput';
     cPj1 = activityj;
@@ -121,8 +126,14 @@ for i = 1:endPoint
     P_kj =decay2 * P_kj + antidecay2 * [cPk1*cPj1, cPk1*cPj2, cPk2*cPj1, cPk2*cPj2];
     if mod(i,10000)==0
         fprintf('i=%d\n',i);
+        alpha = alpha+1
+
+        coefCompute(P_jk,Pk1,Pk2)
+        coefCompute(P_kj,Pj1,Pj2)
     end
 end
+
+%%%%%%%%%%%%%%%%% finalize %%%%%%%%%%%%%%%%%
 P1 = P_j(:,1)/Pj1;
 P2 = P_j(:,2)/Pj2;
 P3 = P_j(:,3)/Pj1;
@@ -135,5 +146,8 @@ P3 = P_k(:,3)/Pk1;
 P4 = P_k(:,4)/Pk2;
 figure
 visP(log(P1./P2)-log(P3./P4),pSize);
+
+coefCompute(P_jk,Pk1,Pk2)
+coefCompute(P_kj,Pj1,Pj2)
 
 
