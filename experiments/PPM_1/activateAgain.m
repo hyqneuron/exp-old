@@ -20,12 +20,12 @@ P4 = P_jk_4 / Pk2;
 
 % right now we work for the 2-output case, so j is not a vector but a
 % single probability value. W1 and W2, P1234 are all scalars.
-W1 = log(P1/P2)
-W2 = log(P3/P4)
+W1 = log(P1/P2);
+W2 = log(P3/P4);
 % x*W1 + (1-x)*W2 + O = x * (W1 - W2) + W2 + O
 s = -Alpha* (j*(W1-W2)+W2) + origSum;
-origSum = origSum
-inhit = -Alpha* (j*(W1-W2)+W2)
+%origSum = origSum
+%inhit = -Alpha* (j*(W1-W2)+W2)
 %SW1 = sum(W1)
 %SW2 = sum(W2)
 % activity = 1/(1+e^(-s))
