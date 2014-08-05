@@ -18,16 +18,18 @@ This has to be done in several steps:
 %%%%%
 % 1.1 constants
 %%%%%
-N = 100;  % number of units
+N = 2;  % number of units
 endPoint = 120000; % number of samples used for training
 decay = 0.999;
-decay2= 0.99;
+decay2= 0.995;
 antidecay=1-decay;
 antidecay2=1-decay2;
 AvgOn  = 0.3; % average activity of input
 AvgOff = 1 - AvgOn;
-Alpha=0.02;
-Steps=30;
+Alpha=1;
+Steps=1;
+Beta = 1*ones(1,N);
+Kappa=1;
 
 %%%%%
 % 1.1 data source
@@ -44,6 +46,10 @@ for i = 1:endPoint % cast 2D images to 1D vectors
     end
 end
 
+%{
+patches = single(activitiesLv1(60001:120000,:));
+numInput = size(patches,2);
+%}
 %%%%%
 % 1.2 logging data
 %%%%%
@@ -68,7 +74,11 @@ P_BnB = Pb1 * Pb2 * ones(N,N);
 % 1.4 N-unit weight differentiation
 P_A_B = P_A_B .* rand(numInput, N);
 P_AnB = P_AnB .* rand(numInput, N);
-
+%{
+for i = 1:N
+    P_A_B(i,i)=P_A_B(i,i)*3;
+end
+%}
 for i = 1:endPoint
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% 2 Activation
@@ -80,10 +90,10 @@ for i = 1:endPoint
     term2 = log( bsxfun( @minus, P_B,   P_A_B) ) ... % compute log(P(na, b))
            -log( bsxfun( @minus, 1-P_B, P_AnB) );    % compute log(P(na,nb))
     term3 = log(1-P_B) - log(P_B);
-    sums  = input * (term1-term2) + sum (term2) + (numInput-1) * term3;
-    acts  = 1./(1+exp(-sums)); % activities
+    sumsInput  = input * (term1-term2) + sum (term2) + (numInput-1) * term3;
+    acts  = 1./(1+exp(-10*sumsInput)); % activities
 %%%%%
-% 2.1 reactivate, later
+% 2.1 reactivate
 %%%%%
     Term1 = log(P_B_B) - log(P_BnB);
     Term2 = log(abs(bsxfun(@minus, P_B,   P_B_B))) ... % log(P(nbi, bj))
@@ -92,15 +102,21 @@ for i = 1:endPoint
         Term1(j,j)=0;
         Term2(j,j)=0;
     end
+    sums = sumsInput;
+    f1 = abs(sums);
     for j = 1:Steps
-        newSums = -Alpha*(acts * (Term1-Term2)+sum(Term2)+(N-1)*term3)+sums;
-        acts  = 1./(1+exp(-newSums));
+        t = acts * (Term1-Term2)+sum(Term2)+(N-1)*term3;
+        k = sum(sums)^2;
+        sums = Alpha*(sumsInput -  Beta .* t)+(1-Alpha)*sums;
+        acts  = 1./(1+exp(-10*sums));
     end
+    f2 = abs(t);
+    %Beta = decay2 * Beta + antidecay2 * (f1./(f2+0.00000001));
 %%%%%
 % 2.2 data logging
 %%%%%
     activities(i,:) = acts;
-    sss(i,:)        = sums;
+    sss(i,:)        = sumsInput;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% 3 Joint activity and weights
@@ -110,9 +126,11 @@ for i = 1:endPoint
     P_AnB= decay * P_AnB  + antidecay * (input' * (1-acts));
     P_B_B= decay2* P_B_B  + antidecay2* (acts'  * acts);
     P_BnB= decay2* P_BnB  + antidecay2* (acts'  * (1-acts));
-    if mod(i,1000)==0
-        %Alpha = Alpha-0.005;
+    if mod(i,100)==0
+        %Alpha = Alpha+0.1;
         P_B
+        Beta = Beta + 0.1;
+        Kappa = Kappa+0.2
         fprintf('i=%d\n',i);
     end
     if mod(i,10000)==0

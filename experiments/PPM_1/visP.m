@@ -5,7 +5,9 @@ if nargin == 2
 else
     W1 = log(P1./P2);
 end
-image(reshape(W1,size,size)*20+100);
-colormap(cmap2);
+
+%colormap(cmap2);
+imagesc(reshape(W1,size,size)*50+100);
+colormap(jet);
 axis square;
 end

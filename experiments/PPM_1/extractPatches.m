@@ -8,7 +8,7 @@ so we leave a border = 3, and do not extract from areas outside border
 %}
 starting = 4;
 ending = 25;
-patchSize = 10;
+patchSize = 8;
 last = ending - patchSize + 1;
 % we sample uniformly from [starting,last]
 
@@ -22,7 +22,7 @@ for i = 1:size(trainAll,1)
     for j = 1:samplesPerImage
         x = randi([starting,last]);
         y = randi([starting,last]);
-        extracted = extractPatch(trainAll(i,:), x,y,patchSize,patchSize,28,28);
+        extracted = extractPatch(trainAllRED(i,:), x,y,patchSize,patchSize,32,32);
         patches(:,:,reorderIndices((i-1)*samplesPerImage+j)) = extracted; 
     end
 end
