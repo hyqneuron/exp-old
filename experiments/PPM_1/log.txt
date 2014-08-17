@@ -1,0 +1,8 @@
+OTHER THINGS TO TRY:
+1. autoencoder, sparse autoencoder
+2. BM, RBM, sparse RBM
+
+TODO:
+
+1. turn unitN.m into the original form that performs division before logarithm and that uses 4 sets of probability values
+2. turn unitN.m into stochastic version
