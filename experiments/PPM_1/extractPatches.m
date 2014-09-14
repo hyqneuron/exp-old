@@ -8,7 +8,7 @@ so we leave a border = 3, and do not extract from areas outside border
 %}
 starting = 4;
 ending = 25;
-patchSize = 15;
+patchSize = 10;
 last = ending - patchSize + 1;
 % we sample uniformly from [starting,last]
 
