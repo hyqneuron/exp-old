@@ -67,6 +67,8 @@ clear P_kj_1 P_kj_2 P_kj_3 P_kj_4;
 
 decay = 0.999;
 antidecay=1-decay;
+decay2= 0.95;
+antidecay2=1-decay2;
 
 endPoint = 30000;
 activities = zeros(endPoint,1);
@@ -79,21 +81,29 @@ for i = 1:endPoint
     % 2 compute activity
     input = reshape(patches(:,:,i),1,pSize*pSize);
     antinput = 1.-input;
-    input(pCenter);
-    [activityj,sj] = activate(input,P_j(:,1),P_j(:,2),P_j(:,3),P_j(:,4),Pj1,Pj2);
-    [activityk,sk] = activate(input,P_j(:,1),P_j(:,2),P_j(:,3),P_j(:,4),Pj1,Pj2);
+    [activityj,sumj] = activate(input,P_j(:,1),P_j(:,2),P_j(:,3),P_j(:,4),Pj1,Pj2);
+    [activityk,sumk] = activate(input,P_k(:,1),P_k(:,2),P_k(:,3),P_k(:,4),Pk1,Pk2);
     % 2.1 reactivate
-    [activityj2,sj2] = activateAgain(sj, activityk, P_kj(1), P_kj(2), P_kj(3), P_kj(4), Pj1, Pj2, 3.6461503291320485);
-    [activityk2,sk2] = activateAgain(sk, activityj, P_jk(1), P_jk(2), P_jk(3), P_jk(4), Pk1, Pk2, 3.6461503291320485);
-    activities(i)=activityj;
-    sss(i) = s;
+    alpha = 2;%3.646150329132049;
+    for j = 1:20
+        activityj_tmp = activityj;
+        % compute new activity for j, using activity of k
+        [activityj,sumj2] = activateAgain(sumj, activityk, ...
+            P_kj(1), P_kj(2), P_kj(3), P_kj(4), Pj1, Pj2, alpha);
+        % compute new activity for k, using activity of j
+        [activityk,sumk2] = activateAgain(sumk, activityj_tmp, ...
+            P_jk(1), P_jk(2), P_jk(3), P_jk(4), Pk1, Pk2, alpha);
+    end
+    
+    %activities(i)=activityj;
+    %sss(i) = s;
     % 3 compute current P values
     input = input';
     antinput = antinput';
-    cPj1 = activityj2;
-    cPj2 = 1 - activityj2;
-    cPk1 = activityk2;
-    cPk2 = 1 - activityk2;
+    cPj1 = activityj;
+    cPj2 = 1 - activityj;
+    cPk1 = activityk;
+    cPk2 = 1 - activityk;
     
     cP_j = [input * cPj1, input * cPj2, antinput * cPj1, antinput * cPj2];
     cP_k = [input * cPk1, input * cPk2, antinput * cPk1, antinput * cPk2];
@@ -107,8 +117,8 @@ for i = 1:endPoint
     Pk2 = decay * Pk2 + antidecay * cPk2;
     P_k = decay * P_k + antidecay * cP_k;
     
-    P_jk =decay * P_jk + antidecay * [cPj1*cPk1, cPj1*cPk2, cPj2*cPk1, cPj2*cPk2];
-    P_kj =decay * P_jk + antidecay * [cPk1*cPj1, cPk1*cPj2, cPk2*cPj1, cPk2*cPj2];
+    P_jk =decay2 * P_jk + antidecay2 * [cPj1*cPk1, cPj1*cPk2, cPj2*cPk1, cPj2*cPk2];
+    P_kj =decay2 * P_kj + antidecay2 * [cPk1*cPj1, cPk1*cPj2, cPk2*cPj1, cPk2*cPj2];
     if mod(i,10000)==0
         fprintf('i=%d\n',i);
     end
@@ -119,10 +129,10 @@ P3 = P_j(:,3)/Pj1;
 P4 = P_j(:,4)/Pj2;
 figure
 visP(log(P1./P2)-log(P3./P4),pSize);
-P1 = P_k(:,1)/Pj1;
-P2 = P_k(:,2)/Pj2;
-P3 = P_k(:,3)/Pj1;
-P4 = P_k(:,4)/Pj2;
+P1 = P_k(:,1)/Pk1;
+P2 = P_k(:,2)/Pk2;
+P3 = P_k(:,3)/Pk1;
+P4 = P_k(:,4)/Pk2;
 figure
 visP(log(P1./P2)-log(P3./P4),pSize);
 

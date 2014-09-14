@@ -11,6 +11,8 @@ function [activity, s] = activateAgain(origSum, j, ...
 %   just a few times.
 %   
 %   Alpha is the step size we use to control accuracy.
+%   
+%   We compute the effect of j on k. So we output the activity of k
 P1 = P_jk_1 / Pk1;
 P2 = P_jk_2 / Pk2;
 P3 = P_jk_3 / Pk1;
