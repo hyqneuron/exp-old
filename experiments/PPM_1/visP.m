@@ -7,7 +7,7 @@ else
 end
 
 %colormap(cmap2);
-imagesc(reshape(W1,size,size)*50+100);
+imagesc(reshape(W1,size,size));
 colormap(jet);
 axis square;
 end

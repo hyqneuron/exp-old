@@ -74,6 +74,8 @@ activitiesj = zeros(endPoint,1);
 activitiesk = zeros(endPoint,1);
 sssj = zeros(endPoint,1);
 sssk = zeros(endPoint,1);
+Tj = 1;
+Tk = 1;
 
 cP_j = zeros(pSize*pSize,4);
 
@@ -82,17 +84,19 @@ alpha = 1;
 for i = 1:endPoint
     input = reshape(patches(:,:,i),1,pSize*pSize);
     antinput = 1.-input;
-    [activityj,sumj] = activate(input,P_j(:,1),P_j(:,2),P_j(:,3),P_j(:,4),Pj1,Pj2);
-    [activityk,sumk] = activate(input,P_k(:,1),P_k(:,2),P_k(:,3),P_k(:,4),Pk1,Pk2);
+    [activityj,sumj] = activate(input,P_j(:,1),P_j(:,2),P_j(:,3),P_j(:,4),Pj1,Pj2, Tj);
+    [activityk,sumk] = activate(input,P_k(:,1),P_k(:,2),P_k(:,3),P_k(:,4),Pk1,Pk2, Tk);
+    Tj = decay * Tj + antidecay * abs(sumj)*1;
+    Tk = decay * Tk + antidecay * abs(sumk)*1;
     % 2.1 reactivate
     for j = 1:1
         activityj_tmp = activityj;
         % compute new activity for j, using activity of k
         [activityj,sumj2] = activateAgain(sumj, activityk, ...
-            P_kj(1), P_kj(2), P_kj(3), P_kj(4), Pj1, Pj2, alpha);
+            P_kj(1), P_kj(2), P_kj(3), P_kj(4), Pj1, Pj2, alpha, Tj);
         % compute new activity for k, using activity of j
         [activityk,sumk2] = activateAgain(sumk, activityj_tmp, ...
-            P_jk(1), P_jk(2), P_jk(3), P_jk(4), Pk1, Pk2, alpha);
+            P_jk(1), P_jk(2), P_jk(3), P_jk(4), Pk1, Pk2, alpha, Tk);
     end
     
     activitiesj(i)=activityj;
@@ -125,11 +129,11 @@ for i = 1:endPoint
     P_jk =decay2 * P_jk + antidecay2 * [cPj1*cPk1, cPj1*cPk2, cPj2*cPk1, cPj2*cPk2];
     P_kj =decay2 * P_kj + antidecay2 * [cPk1*cPj1, cPk1*cPj2, cPk2*cPj1, cPk2*cPj2];
     if mod(i,10000)==0
-        fprintf('i=%d\n',i);
+        fprintf('i=%d, Tj=%f, Tk=%f\n',i, Tj, Tk);
         alpha = alpha+1
 
-        coefCompute(P_jk,Pk1,Pk2)
-        coefCompute(P_kj,Pj1,Pj2)
+        %coefCompute(P_jk,Pk1,Pk2)
+        %coefCompute(P_kj,Pj1,Pj2)
     end
 end
 

@@ -1,6 +1,6 @@
 function [activity, s] = activateAgain(origSum, j, ...
                 P_jk_1, P_jk_2, P_jk_3, P_jk_4, Pk1, Pk2, ...
-                Alpha)
+                Alpha, T)
 % activateAgain  second activation pass for lateral inhibition
 %   An output unit is first activated using "activate", which only accepts
 %   the input. After the first pass, an activity value is obtained for each
@@ -24,6 +24,7 @@ W1 = log(P1/P2);
 W2 = log(P3/P4);
 % x*W1 + (1-x)*W2 + O = x * (W1 - W2) + W2 + O
 s = -Alpha* (j*(W1-W2)+W2) + origSum;
+s = s / T;
 %origSum = origSum
 %inhit = -Alpha* (j*(W1-W2)+W2)
 %SW1 = sum(W1)

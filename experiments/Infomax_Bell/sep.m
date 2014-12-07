@@ -17,7 +17,8 @@ sweep=sweep+1; t=1;
 noblocks=fix(P/B);
 BI=B*Id;
 for t=t:B:t-1+noblocks*B,
-  u=w*x(:,t:t+B-1); 
-  w=w+L*(BI+(1-2*(1./(1+exp(-u))))*u')*w;
+  u=w*x(:,t:t+B-1);
+  y=1./(1+exp(-u));
+  w=w+L*(BI+(1-2*y)*u')*w;
 end;
 sepout

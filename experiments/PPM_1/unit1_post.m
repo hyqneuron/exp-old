@@ -1,4 +1,11 @@
 %{
+This is a modified version of the original unit1.m
+This version changes the prob computation to a more traditional form
+and then uses mini-batch
+%}
+
+
+%{
 This test uses a single iGtor unit to test what would happen when
 a single unit is used and when no lateral competition is present.
 
@@ -63,8 +70,11 @@ P_j_4 = AvgOff        * Pb2 * ones(pSize*pSize, 1);
 P_j = [P_j_1, P_j_2, P_j_3, P_j_4];
 clear P_j_1 P_j_2 P_j_3 P_j_4;
 
-decay = 0.999;
+decay = 0.99;
 antidecay=1-decay;
+
+epochs    = 2
+batchSize = 100
 
 endPoint = 120000;
 activities = zeros(endPoint,1);
@@ -73,28 +83,41 @@ sss = zeros(endPoint,1);
 cP_j = zeros(pSize*pSize,4);
 T = 1;
 
-% we do training using patches in a sequential manner
-for i = 1:endPoint
-    % 2 compute activity
-    input = reshape(patches(:,:,i),1,pSize*pSize);
-    antinput = 1.-input;
-    [activity,s] = activate(input,P_j(:,1),P_j(:,2),P_j(:,3),P_j(:,4),Pb1,Pb2, T);
-    T = decay * T + antidecay * abs(s)*6;
-    activities(i)=activity;
-    sss(i) = s;
-    % 3 compute current P values
-    input = input';
-    antinput = antinput';
-    cPb1 = activity;
-    cPb2 = 1 - activity;
-    cP_j = [input * cPb1, input * cPb2, antinput * cPb1, antinput * cPb2];
 
-    % 4 update P values
-    Pb1 = decay * Pb1 + antidecay * cPb1;
-    Pb2 = decay * Pb2 + antidecay * cPb2;
-    P_j = decay * P_j + antidecay * cP_j;
-    if mod(i,10000)==0
-        fprintf('i=%d, T=%f\n',i, T);
+% we do training using patches in a sequential manner
+%{
+input: each sample a row
+we want to sum across samples
+
+row: input values
+col: sample
+row: sample
+col: output values
+%}
+for epoch = 1:epochs
+    for i = 1:batchSize:endPoint
+        % 2 compute activity, each input is a row
+        input = reshape(patches(:,:,i:i+batchSize-1),pSize*pSize, batchSize)';
+        antinput = 1.-input;
+        [activity,s] = activate(input,P_j(:,1),P_j(:,2),P_j(:,3),P_j(:,4),Pb1,Pb2, T);
+        T = decay * T + antidecay * abs(s)*6;
+        activities(i:i+batchSize-1)=activity;
+        sss(i:i+batchSize-1) = s;
+        % 3 compute current P values
+        % Recompute
+        input = input';
+        antinput = antinput';
+        cPb1 = activity;
+        cPb2 = 1 - activity;
+        cP_j = [input * cPb1, input * cPb2, antinput * cPb1, antinput * cPb2];
+        
+        % 4 update P values
+        Pb1 = decay * Pb1 + antidecay * mean(cPb1);
+        Pb2 = decay * Pb2 + antidecay * mean(cPb2);
+        P_j = decay * P_j + antidecay * cP_j./batchSize;
+        if mod(i+batchSize-1,10000)==0
+            fprintf('i=%d, T=%f\n',i, T);
+        end
     end
 end
 P1 = P_j(:,1)/Pb1;

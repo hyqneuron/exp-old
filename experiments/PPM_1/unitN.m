@@ -18,7 +18,7 @@ This has to be done in several steps:
 %%%%%
 % 1.1 constants
 %%%%%
-N = 2;  % number of units
+N = 5;  % number of units
 endPoint = 120000; % number of samples used for training
 decay = 0.999;
 decay2= 0.995;
@@ -55,6 +55,7 @@ numInput = size(patches,2);
 %%%%%
 activities = zeros(endPoint,N);
 sss = zeros(endPoint,N);
+Ts = ones(1,N);
 
 % 1.3 weights
 % We need several set of weights
@@ -91,7 +92,10 @@ for i = 1:endPoint
            -log( bsxfun( @minus, 1-P_B, P_AnB) );    % compute log(P(na,nb))
     term3 = log(1-P_B) - log(P_B);
     sumsInput  = input * (term1-term2) + sum (term2) + (numInput-1) * term3;
+    sumsInput = sumsInput ./ Ts;
     acts  = 1./(1+exp(-10*sumsInput)); % activities
+    
+    Ts = decay * Ts + antidecay * abs(sumsInput);
 %%%%%
 % 2.1 reactivate
 %%%%%
@@ -108,6 +112,7 @@ for i = 1:endPoint
         t = acts * (Term1-Term2)+sum(Term2)+(N-1)*term3;
         k = sum(sums)^2;
         sums = Alpha*(sumsInput -  Beta .* t)+(1-Alpha)*sums;
+        sums = sums ./ T;
         acts  = 1./(1+exp(-10*sums));
     end
     f2 = abs(t);
