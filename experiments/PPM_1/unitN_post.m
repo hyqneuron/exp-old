@@ -135,14 +135,6 @@ for i = 1:batchSize:endPoint
     P_B  = decay * P_B    + antidecay * mean(acts);
     P_A_B= decay * P_A_B  + antidecay * (input' * acts)/batchSize;
     P_AnB= decay * P_AnB  + antidecay * (input' * (1-acts))/batchSize;
-    %{
-    P_B  = P_B    + mean(acts);
-    PnB  = PnB    + (1-mean(acts));
-    P_A_B= P_A_B  + (input' * acts)/batchSize;
-    P_AnB= P_AnB  + (input' * (1-acts))/batchSize;
-    PnA_B= PnA_B  + ((1-input)' * acts)/batchSize;
-    PnAnB= PnAnB  + ((1-input)' * (1-acts))/batchSize;
-    %}
     if mod(i+batchSize-1,10000)==0
         fprintf('i=%d\n',i);
         Ts
